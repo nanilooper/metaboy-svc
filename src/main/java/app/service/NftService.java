@@ -1,5 +1,6 @@
 package app.service;
 
+import app.client.GmeClient;
 import app.common.dto.FilterRequest;
 import app.common.dto.Filters;
 import app.common.dto.PagedResult;
@@ -11,7 +12,10 @@ import app.cosmos.repository.NftRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -23,6 +27,13 @@ public class NftService {
     private NftRepository nftRepository;
 
     private CustomDAOImpl<Nft> nftCustomDao;
+
+    private GmeClient gmeClient;
+
+    @Autowired
+    public void setGmeClient(GmeClient gmeClient) {
+        this.gmeClient = gmeClient;
+    }
 
     @Autowired
     public void setCollectionRepository(CollectionRepository collectionRepository) {
@@ -52,14 +63,38 @@ public class NftService {
     }
 
     public PagedResult<Nft> filterNfts(FilterRequest filterRequest){
-        String Query = constructQuery(filterRequest.getCollectionId(), filterRequest.getFilters());
-        PagedResult<Nft> nfts = nftCustomDao.queryDocuments(Query,Nft.class,"nft",filterRequest.getContinuationToken(),5);
+        filterRequest.setPageSize(Math.max(filterRequest.getPageSize(), 48));
+        String Query = constructQuery(filterRequest);
+        PagedResult<Nft> nfts = nftCustomDao.queryDocuments(Query,Nft.class,"nft",
+                filterRequest.getContinuationToken(),filterRequest.getPageSize());
+        Set<String> nftIds = nfts.getResults()
+                .stream()
+                .map(Nft::getNftId)
+                .collect(Collectors.toSet());
+        if (filterRequest.isFetchGmePrices()){
+            try {
+                Map<String, BigDecimal> pricesMap = gmeClient.getPriceMap(nftIds);
+                for (Nft nft: nfts.getResults()){
+                    nft.setPrice(pricesMap.get(nft.getNftId()));
+                }
+            }catch (Exception ignored){
+
+            }
+        }
         return nfts;
     }
 
-    private String constructQuery(String collectionId, List<Filters> filters){
+    private String constructQuery(FilterRequest filterRequest){
+        String collectionId = filterRequest.getCollectionId();
+        List<Filters> filters = filterRequest.getFilters();
+
+        String sortBy = filterRequest.getSortBy().equals("rank") ? " order by nft.rank " : "";
+        String sortOrder =  "";
+        if (!sortBy.isEmpty()){
+            sortOrder = filterRequest.getSortOrder();
+        }
         String queryBase = "select * from nft where  nft.collectionId = " + String.format("'%s'", collectionId) +
-                dynamicFilterQuery(filters) + " order by nft.rank asc";
+                dynamicFilterQuery(filters) + sortBy + sortOrder;
         return queryBase;
     }
 
@@ -76,8 +111,5 @@ public class NftService {
         }
         return result.toString();
     }
-
-
-
 
 }

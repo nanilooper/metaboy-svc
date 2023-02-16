@@ -5,6 +5,7 @@ import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 
 
@@ -22,7 +23,7 @@ public class Nft {
 
     private int rank;
 
-    private double price;
+    private BigDecimal price ;
 
     private HashMap<String, String> properties;
 
