@@ -17,15 +17,15 @@ public class NftController {
 
     @GetMapping("/healthCheck")
     public String healthCheck(){
-        return "running";
+        return "metaboy running";
     }
 
-    @PostMapping("/collection")
+    //@PostMapping("/collection")
     public Collection addCollection(@RequestBody Collection collection){
         return bizLogic.createCollection(collection);
     }
 
-    @PostMapping("/nft")
+    //@PostMapping("/nft")
     public Nft addNft(@RequestBody Nft nft){
         return bizLogic.createNft(nft);
     }
@@ -36,9 +36,15 @@ public class NftController {
         return bizLogic.filterNfts(filterRequest);
     }
 
-    @GetMapping("/collection/getAll")
+    @GetMapping("/collection/")
     public Iterable<Collection> getAllCollections(){
         return bizLogic.getAllCollections();
+    }
+
+    @GetMapping("/collection/{collectionId}")
+    public Collection getCollection(@PathVariable("collectionId") String collectionId){
+        Collection collection = bizLogic.getAllCollection(collectionId);
+        return collection;
     }
 
 }

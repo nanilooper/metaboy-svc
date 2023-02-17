@@ -21,9 +21,15 @@ public class Nft {
 
     private String name;
 
+    private String metadataUri;
+
+    private String mediaUri;
+
+    private String gmeUrl;
+
     private int rank;
 
-    private BigDecimal price ;
+    private double price;
 
     private HashMap<String, String> properties;
 

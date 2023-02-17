@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,14 +42,13 @@ public class GmeClient {
         try {
             Map<String, GmePriceInfo> pricesMap =  objectMapper.readValue(responseBody, new TypeReference<>() {
             });
-            Map<String, BigDecimal> newPriceMap =
-                    pricesMap.entrySet().stream()
-                            .collect(Collectors.toMap(
-                                    e -> e.getKey(),
-                                    e -> e.getValue().getLoopringSaleInfo() != null ?
-                                            converWeiToEth(e.getValue().getLoopringSaleInfo().getMinPricePerNftInWei()) : new BigDecimal("-1"))
-                            );
-            return newPriceMap;
+            return pricesMap.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> e.getKey(),
+                            e -> e.getValue().getLoopringSaleInfo() != null ?
+                                    converWeiToEth(e.getValue().getLoopringSaleInfo().getMinPricePerNftInWei())
+                                    : new BigDecimal("-1"))
+                    );
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -60,6 +59,6 @@ public class GmeClient {
     private BigDecimal converWeiToEth(String wei){
         BigDecimal weiB = new BigDecimal(wei);
         BigDecimal con = new BigDecimal("1000000000000000000");
-        return weiB.divide(con);
+        return weiB.divide(con,3, RoundingMode.HALF_UP);
     }
 }

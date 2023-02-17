@@ -15,12 +15,12 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class NftService {
-
 
     private CollectionRepository collectionRepository;
 
@@ -54,6 +54,11 @@ public class NftService {
         return (List<Collection>) collectionRepository.findAll();
     }
 
+    public Collection getAllCollection(String collectionId){
+        Optional<Collection> optional = collectionRepository.findById(collectionId);
+        return optional.orElse(null);
+    }
+
     public Collection createCollection(Collection collection){
         return collectionRepository.save(collection);
     }
@@ -63,6 +68,9 @@ public class NftService {
     }
 
     public PagedResult<Nft> filterNfts(FilterRequest filterRequest){
+        if (filterRequest.getCollectionId() == null){
+            return null;
+        }
         filterRequest.setPageSize(Math.max(filterRequest.getPageSize(), 48));
         String Query = constructQuery(filterRequest);
         PagedResult<Nft> nfts = nftCustomDao.queryDocuments(Query,Nft.class,"nft",
@@ -75,7 +83,7 @@ public class NftService {
             try {
                 Map<String, BigDecimal> pricesMap = gmeClient.getPriceMap(nftIds);
                 for (Nft nft: nfts.getResults()){
-                    nft.setPrice(pricesMap.get(nft.getNftId()));
+                    nft.setPrice(pricesMap.get(nft.getNftId()).doubleValue());
                 }
             }catch (Exception ignored){
 
@@ -87,15 +95,18 @@ public class NftService {
     private String constructQuery(FilterRequest filterRequest){
         String collectionId = filterRequest.getCollectionId();
         List<Filters> filters = filterRequest.getFilters();
-
-        String sortBy = filterRequest.getSortBy().equals("rank") ? " order by nft.rank " : "";
+        String sortBy = filterRequest.getSortBy() != null && filterRequest.getSortBy().equals("rank") ?
+                " order by nft.rank " : "";
         String sortOrder =  "";
         if (!sortBy.isEmpty()){
-            sortOrder = filterRequest.getSortOrder();
+            if (filterRequest.getSortOrder() != null && filterRequest.getSortOrder().equalsIgnoreCase("desc") ){
+                sortOrder = "desc";
+            }else {
+                sortOrder = "asc";
+            }
         }
-        String queryBase = "select * from nft where  nft.collectionId = " + String.format("'%s'", collectionId) +
+        return "select * from nft where  nft.collectionId = " + String.format("'%s'", collectionId) +
                 dynamicFilterQuery(filters) + sortBy + sortOrder;
-        return queryBase;
     }
 
     private String dynamicFilterQuery(List<Filters> filters){
