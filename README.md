@@ -1,5 +1,7 @@
 ### This Application features the REST APIS to Filter NFTs using traits from a Collection
 
+### Tech Stack : Java + SpringBoot + CosmosDB 
+
 ### Local Setup
 
 ```java
