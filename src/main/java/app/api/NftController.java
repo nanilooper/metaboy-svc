@@ -31,6 +31,7 @@ public class NftController {
     }
 
 
+    @CrossOrigin
     @PostMapping("/filterNfts")
     public PagedResult<Nft> filterNfts(@RequestBody FilterRequest filterRequest){
         return bizLogic.filterNfts(filterRequest);
@@ -41,6 +42,7 @@ public class NftController {
         return bizLogic.getAllCollections();
     }
 
+    @CrossOrigin
     @GetMapping("/collection/{collectionId}")
     public Collection getCollection(@PathVariable("collectionId") String collectionId){
         Collection collection = bizLogic.getAllCollection(collectionId);

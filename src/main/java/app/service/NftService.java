@@ -71,7 +71,7 @@ public class NftService {
         if (filterRequest.getCollectionId() == null){
             return null;
         }
-        filterRequest.setPageSize(Math.max(filterRequest.getPageSize(), 48));
+        filterRequest.setPageSize(Math.min(filterRequest.getPageSize(), 48));
         String Query = constructQuery(filterRequest);
         PagedResult<Nft> nfts = nftCustomDao.queryDocuments(Query,Nft.class,"nft",
                 filterRequest.getContinuationToken(),filterRequest.getPageSize());
